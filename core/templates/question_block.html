@@ -1,0 +1,30 @@
+<p><strong>{{ question.text }}</strong></p>
+
+{% if question.question_type == "single" %}
+  {% for option in question.options.all %}
+    <label>
+      <input type="radio" name="answer" value="{{ option.id }}"
+        {% if option.id in selected_option_ids %}checked{% endif %}>
+      {{ option.text }}
+    </label><br>
+  {% endfor %}
+{% elif question.question_type == "multiple" %}
+  {% for option in question.options.all %}
+    <label>
+      <input type="checkbox" name="answer" value="{{ option.id }}"
+        {% if option.id in selected_option_ids %}checked{% endif %}>
+      {{ option.text }}
+    </label><br>
+  {% endfor %}
+{% endif %}
+
+<div style="margin-top: 10px;">
+  {% if index > 0 %}
+    <button type="submit" name="prev">← Назад</button>
+  {% endif %}
+  {% if index < total|add:"-1" %}
+    <button type="submit" name="next">Далее →</button>
+  {% else %}
+    <button type="submit" name="save">Сохранить</button>
+  {% endif %}
+</div>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Анализ опроса: {{ survey.title }}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  /* Вставлен ваш CSS из второго шаблона */
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fa;
+    color: #333;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #007bff;
+    color: white;
+    padding: 14px 40px;
+  }
+
+  header .user-info {
+    font-size: 16px;
+  }
+
+  header .user-info strong {
+    font-weight: 700;
+  }
+
+  header a.logout-link {
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 16px;
+  }
+
+  header a.logout-link:hover {
+    text-decoration: underline;
+  }
+
+  .container {
+    background: white;
+    margin: 30px auto;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgb(0 0 0 / 0.1);
+    width: 92vw;
+    max-width: 900px;
+    box-sizing: border-box;
+  }
+
+  a.back-link {
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 15px;
+    display: inline-block;
+  }
+
+  a.back-link:hover {
+    text-decoration: underline;
+  }
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 700;
+    color: #222;
+  }
+
+  h4 {
+    margin-bottom: 8px;
+    color: #222;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 20px 0;
+    max-height: none;
+    overflow: visible;
+  }
+
+  ul li {
+    padding-left: 18px;
+    position: relative;
+    font-size: 15px;
+    border-bottom: 1px solid #eee;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #007bff;
+  }
+
+  ul li:last-child {
+    border-bottom: none;
+  }
+
+  .question-block {
+    margin-bottom: 40px;
+  }
+
+  /* Canvas фиксированной высоты */
+  canvas {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 50px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="user-info">
+    Пользователь: <strong>{{ request.user.username }}</strong><br>
+    Статус: Главный социолог
+  </div>
+  <a href="{% url 'logout' %}" class="logout-link">Выйти</a>
+</header>
+
+<div class="container">
+  <a href="{% url 'survey_detail' survey.id %}" class="back-link">← Назад</a>
+  <h2>Анализ опроса: {{ survey.title }}</h2>
+  <form method="get">
+    <input type="hidden" name="compare" value="1">
+    <input type="hidden" name="page" value="{{ page_obj.number }}">
+    <label for="other_survey_id">Сравнить с опросом:</label>
+    <select name="other_survey_id" id="other_survey_id">
+      <option value="">-- Выберите опрос --</option>
+      {% for s in similar_surveys %}
+        <option value="{{ s.id }}" {% if s.id == selected_survey_id %}selected{% endif %}>{{ s.title }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Показать сравнение</button>
+  </form>
+  
+  {% if compare %}
+    <form method="get">
+      <input type="hidden" name="page" value="{{ page_obj.number }}">
+      <button type="submit">Скрыть сравнение</button>
+    </form>
+  {% endif %}
+  
+
+  {% for item in question_data %}
+  <div class="question-block">
+    <h4>{{ item.question.text }}</h4>
+
+    <!-- График -->
+    <canvas id="chart-{{ forloop.counter }}" 
+      style="height: {{ item.chart|length|add:"0" }}0px; max-height: 400px;">
+    </canvas>
+
+    <!-- Если сравнения нет, выводим список с вариантами и распределением -->
+    {% if not compare %}
+      <ul>
+        {% for opt in item.chart %}
+          <li>{{ opt.text }} — {{ opt.percentage|floatformat:2 }}%</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <script>
+      (function(){
+        const ctx = document.getElementById('chart-{{ forloop.counter }}').getContext('2d');
+
+        const labels = [
+          {% for opt in item.chart %}"{{ opt.text|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}
+        ];
+
+        const currentData = [
+          {% for opt in item.chart %}{{ opt.percentage|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        ];
+
+        const compareData = [
+          {% for opt in item.comparison_chart %}
+            {{ opt.percentage|floatformat:2 }}{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        ];
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '{{ survey.title }}',
+                data: currentData,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+              },
+              {% if compare and other_survey %}
+              {
+                label: '{{ other_survey.title }}',
+                data: compareData,
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+              }
+              {% endif %}
+            ]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                  callback: function(value) {
+                    return value + '%';
+                  }
+                }
+              }
+            }
+          }
+        });
+      })();
+    </script>
+  </div>
+  
+  {% endfor %}
+
+  <div style="margin-top: 30px; text-align: center;">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="back-link">← Назад</a>
+    {% endif %}
+    <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="back-link">Вперёд →</a>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>
+
+
+

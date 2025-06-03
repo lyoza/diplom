@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Вход</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      form {
+        background: #fff;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 3px 12px rgb(0 0 0 / 0.1);
+        width: 360px;
+        box-sizing: border-box;
+      }
+
+      h2 {
+        margin: 0 0 24px 0;
+        text-align: center;
+        font-weight: 700;
+        color: #333;
+        font-size: 28px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+        font-size: 15px;
+      }
+
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 16px;
+        border: 1.8px solid #ccc;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+        transition: border-color 0.25s ease;
+      }
+
+      input[type="text"]:focus,
+      input[type="password"]:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        font-size: 17px;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      p.error {
+        margin-top: 15px;
+        color: #d9534f;
+        font-weight: 600;
+        text-align: center;
+        font-size: 14px;
+      }
+    </style>
+</head>
+<body>
+    <form method="post">
+        <h2>Войти</h2>
+        {% csrf_token %}
+        <label for="username">Логин:</label>
+        <input type="text" name="username" id="username" required />
+
+        <label for="password">Пароль:</label>
+        <input type="password" name="password" id="password" required />
+
+        <button type="submit">Войти</button>
+
+        {% if form.errors %}
+            <p class="error">Неверный логин или пароль</p>
+        {% endif %}
+    </form>
+</body>
+</html>
+

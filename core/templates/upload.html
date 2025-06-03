@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Панель социолога</title>
+<style>
+  /* Сброс и базовые стили */
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fa;
+    color: #333;
+  }
+
+  /* Хедер с flex, пользователь слева, выход справа */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #007bff;
+    color: white;
+    padding: 14px 40px;
+  }
+
+  header .user-info {
+    font-size: 16px;
+  }
+
+  header .user-info strong {
+    font-weight: 700;
+  }
+
+  header a.logout-link {
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 16px;
+  }
+
+  header a.logout-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Контейнер с шириной 81% и центрированием */
+  .container {
+    background: white;
+    margin: 30px auto;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgb(0 0 0 / 0.1);
+    width: 81vw;
+    max-width: 900px;
+    box-sizing: border-box;
+  }
+
+  /* Форма и элементы в контейнере */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 30px;
+  }
+
+  label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .form-input-wrapper {
+    max-width: 360px;
+    width: 100%;
+  }
+
+  input[type="text"],
+  input[type="file"] {
+    padding: 10px 14px;
+    font-size: 16px;
+    border: 1.8px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.25s ease;
+    width: 100%;
+  }
+
+  input[type="text"]:focus,
+  input[type="file"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  }
+
+  button {
+    max-width: 180px;
+    padding: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-self: flex-start;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  h3 {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 30px 0;
+    max-height: 240px;
+    overflow-y: auto;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+  }
+
+  ul li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 15px;
+  }
+
+  ul li:last-child {
+    border-bottom: none;
+  }
+
+  ul li a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: 600;
+  }
+
+  ul li a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="user-info">
+    Пользователь: <strong>{{ request.user.username }}</strong><br>
+    Статус: Главный социолог
+  </div>
+  <a href="{% url 'logout' %}" class="logout-link">Выйти</a>
+</header>
+
+<div class="container">
+  <form method="post" enctype="multipart/form-data" action="{% url 'upload-docx' %}">
+    {% csrf_token %}
+    <label for="title">Название опроса:</label>
+    <div class="form-input-wrapper">
+      <input type="text" name="title" id="title" required>
+    </div>
+
+    <label for="file">Выберите файл (.docx):</label>
+    <div class="form-input-wrapper">
+      <input type="file" name="file" id="file" accept=".docx" required>
+    </div>
+
+    <button type="submit">Загрузить файл</button>
+  </form>
+
+  <h3>Все опросы:</h3>
+  <ul>
+    {% for s in surveys %}
+      <li><a href="{% url 'survey_detail' s.id %}">{{ s.title }}</a> ({{ s.created_at|date:"d.m.Y H:i" }})</li>
+    {% empty %}
+      <li>Опросов пока нет</li>
+    {% endfor %}
+  </ul>
+</div>
+
+</body>
+</html>
+<script>
+    function submitQuestion(action) {
+        const form = document.getElementById('question-form');
+        const index = parseInt(form.dataset.index);
+        const formData = new FormData(form);
+        formData.append(action, '1');
+    
+        fetch(window.location.pathname + `?index=${index}`, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('form-error').innerText = data.error;
+            } else if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                document.getElementById('question-container').innerHTML = data.html;
+            }
+        });
+    }
+    </script>
+    
+

@@ -1,0 +1,120 @@
+<style>
+  form {
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 5px rgb(0 0 0 / 0.1);
+    max-width: 480px;
+    margin: 0 auto 30px auto;
+  }
+
+  h2 {
+    font-size: 22px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-size: 16px;
+    margin: 10px 0 20px;
+    text-align: center;
+  }
+
+  strong {
+    font-size: 18px;
+    display: block;
+    margin-bottom: 15px;
+  }
+
+  label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+  }
+
+  input[type="radio"],
+  input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+    vertical-align: middle;
+    cursor: pointer;
+  }
+
+  button {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 18px;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  button:disabled {
+    background-color: #cccccc;
+    cursor: default;
+  }
+
+  /* Кнопки рядом, но на мобильных – вертикально */
+  @media (max-width: 480px) {
+    button {
+      display: block;
+      width: 100%;
+      margin: 10px 0 0 0;
+    }
+  }
+</style>
+
+<h2>{{ survey.title }}</h2>
+<p>Вопрос {{ index|add:1 }} из {{ total }}</p>
+
+{% if not has_questions %}
+  <p style="color: red;"><strong>Опрос не содержит ни одного вопроса.</strong></p>
+
+{% elif not has_all_answers %}
+  <p style="color: red;"><strong>Некоторые вопросы не имеют вариантов ответа. Опрос недоступен.</strong></p>
+
+{% else %}
+  <form method="post">
+    {% csrf_token %}
+    <p><strong>{{ question.text }}</strong></p>
+
+    {% if question.question_type == "single" %}
+      {% for option in question.options.all %}
+        <label>
+          <input type="radio" name="answer" value="{{ option.id }}"
+            {% if option.id in selected_option_ids %}checked{% endif %}>
+          {{ option.text }}
+        </label>
+      {% endfor %}
+    {% elif question.question_type == "multiple" %}
+      {% for option in question.options.all %}
+        <label>
+          <input type="checkbox" name="answer" value="{{ option.id }}"
+            {% if option.id in selected_option_ids %}checked{% endif %}>
+          {{ option.text }}
+        </label>
+      {% endfor %}
+    {% endif %}
+
+    {% if index > 0 %}
+      <button type="submit" name="prev">← Назад</button>
+    {% endif %}
+    {% if index < total|add:-1 %}
+      <button type="submit" name="next">Далее →</button>
+    {% else %}
+      <button type="submit" name="save">Сохранить</button>
+    {% endif %}
+  </form>
+{% endif %}
+
+
+
+
